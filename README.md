@@ -4,7 +4,7 @@ A lightweight, simple-to-use unit testing tool for Unity game engine. You can us
 
 ## Quick start
 
-You will need to include the script `KSUnitTest.cs` in your Unity project. Then, create a new C# script in your project (e.g. `SampleTestClass.cs`).
+You will need to only include the script `KSUnitTest.cs` in your Unity project. Then, create a new C# script in your project (e.g. `SampleTestClass.cs`).
 
 Here is an example on how you can create a unit test class with KSUnitTest.
 

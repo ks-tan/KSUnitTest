@@ -1,4 +1,6 @@
-﻿using KSUnitTest;
+﻿#if UNITY_EDITOR
+
+using KSUnitTest;
 
 /// <summary>
 /// A sample of a unit test class.
@@ -51,3 +53,5 @@ public class SampleTestClass
 		_intArray = null;
 	}
 }
+
+#endif

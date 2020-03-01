@@ -1,0 +1,7 @@
+{
+    "name": "com.ks_unity_tools.ks_unit_test",
+    "displayName": "KS Unit Test",
+    "version": "0.0.1",
+    "unity": "2019.2.2f1",
+    "description": "A lightweight, simple-to-use unit testing tool for Unity game engine."
+}
