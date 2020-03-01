@@ -17,7 +17,7 @@ namespace KSUnitTest
 		/// <summary>
 		/// For getting classes with the "KSTestClass" attribute
 		/// </summary>
-		private static IEnumerable<Type> GetTestClasses()
+		public static IEnumerable<Type> GetTestClasses()
 		{
 			foreach (Type type in typeof(UnitTest).Assembly.GetTypes())
 			{
@@ -43,10 +43,9 @@ namespace KSUnitTest
 		}
 
 		/// <summary>
-		/// Exposing the method to run all unit tests in Unity's menu bar
+		/// Running all unit tests in the project
 		/// </summary>
-		[MenuItem("KS Tools/Run Unit Tests")]
-		private static void RunUnitTests()
+		public static void RunUnitTests()
 		{
 			IEnumerable<Type> testClasses = GetTestClasses();
 
@@ -57,6 +56,23 @@ namespace KSUnitTest
 				RunMethods(testClass, typeof(TestTeardown));
 			}
 
+			PrintTestResult();
+		}
+
+		/// <summary>
+		/// Running only the unit tests in a particular test class
+		/// </summary>
+		public static void RunUnitTests(Type testClass)
+		{
+			RunMethods(testClass, typeof(TestSetup));
+			RunMethods(testClass, typeof(TestMethod));
+			RunMethods(testClass, typeof(TestTeardown));
+
+			PrintTestResult();
+		}
+
+		private static void PrintTestResult()
+		{
 			string result = Console.AddBold(_failCount == 0 ? "All unit tests passed!" : _failCount + " unit tests failed!");
 			Console.Log(result, _failCount == 0 ? "green" : "red");
 
@@ -119,6 +135,36 @@ namespace KSUnitTest
 				_failCount += success ? 0 : 1;
 
 				return success;
+			}
+		}
+	}
+
+	public class UnitTestRunner : EditorWindow
+	{
+		[MenuItem("KS Tools/Unit Test Runner")]
+		public static void ShowWindow()
+		{
+			GetWindow(typeof(UnitTestRunner));
+		}
+
+		void OnGUI()
+		{
+			IEnumerable<Type> testClasses = UnitTest.GetTestClasses();
+
+			GUILayout.Label("KS Unit Test Runner", EditorStyles.largeLabel);
+			GUILayout.Label("Click on a button below to begin unit tests.");
+
+			if (GUILayout.Button("Run all"))
+			{
+				UnitTest.RunUnitTests();
+			}
+
+			foreach (Type testClass in testClasses)
+			{
+				if (GUILayout.Button(testClass.Name))
+				{
+					UnitTest.RunUnitTests(testClass);
+				}
 			}
 		}
 	}
