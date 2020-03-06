@@ -73,6 +73,9 @@ namespace KSUnitTest
 			PrintTestResult();
 		}
 
+		/// <summary>
+		/// Printing final unit testing results
+		/// </summary>
 		private static void PrintTestResult()
 		{
 			string result = Console.AddBold(_failCount == 0 ? "All unit tests passed!" : _failCount + " unit tests failed!");
@@ -141,13 +144,13 @@ namespace KSUnitTest
 		}
 	}
 
+	/// <summary>
+	/// The Unity editor window that shows a list of test classes and allows you to run the unit tests
+	/// </summary>
 	public class UnitTestRunner : EditorWindow
 	{
 		[MenuItem("KS Tools/Unit Test Runner")]
-		public static void ShowWindow()
-		{
-			GetWindow(typeof(UnitTestRunner));
-		}
+		public static void ShowWindow() => GetWindow(typeof(UnitTestRunner));
 
 		void OnGUI()
 		{
