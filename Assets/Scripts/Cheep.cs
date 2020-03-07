@@ -219,7 +219,7 @@ namespace Cheep
 
 	/// <summary>
 	/// Identifies the starting syntax node (an expression syntax) and the ending node (an EOF Syntax Token) of the syntax tree
-	/// For now, only acts as the final collection point of all the diagnostic logs from the lexing and parsing of tokens and syntax trees
+	/// It also acts as the final collection point of all the diagnostic logs from the lexing and parsing of tokens and syntax trees
 	/// </summary>
 	public sealed class SyntaxTree
 	{
@@ -233,6 +233,11 @@ namespace Cheep
 			Root = inRoot;
 			EOFToken = inEOFToken;
 		}
+
+		/// <summary>
+		/// Parse a syntax tree from a piece of text
+		/// </summary>
+		public static SyntaxTree Parse(string text) => new Parser(text).Parse();
 	}
 
 	/// <summary>

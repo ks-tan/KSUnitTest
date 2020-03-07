@@ -62,8 +62,7 @@ public class CheepLexerTests
 	public static void Parser_ReportDiagnostics()
 	{
 		string text = "1 + ";
-		var parser = new Parser(text);
-		var syntaxTree = parser.Parse();
+		var syntaxTree = new Parser(text).Parse();
 		StringBuilder expectedDiagnostics = new StringBuilder().AppendLine("ERROR: Unexpected token EOFToken, expected NumberToken");
 		StringBuilder receivedDiagnostics = new StringBuilder();
 
@@ -82,8 +81,7 @@ public class CheepLexerTests
 	public static void Evaluator_EvaluateExpression()
 	{
 		string text = "4 + (1 + 2) * 3";
-		var parser = new Parser(text);
-		var syntaxTree = parser.Parse();
+		var syntaxTree = SyntaxTree.Parse(text);
 		StringBuilder expectedResult = new StringBuilder().AppendLine("13");
 		StringBuilder receivedResult = new StringBuilder();
 
