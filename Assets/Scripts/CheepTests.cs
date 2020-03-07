@@ -37,13 +37,13 @@ public class CheepLexerTests
 	}
 
 	[TestMethod]
-	public static void Parser_CreateExpressionTree()
+	public static void Parser_CreateSyntaxTree()
 	{
 		string text = "1 + 2 + 3";
 		var parser = new Parser(text);
-		var expression = parser.Parse();
-		StringBuilder stringBuilder = new StringBuilder();
-		stringBuilder
+		var syntaxTree = parser.Parse();
+
+		StringBuilder expectedSyntaxTree = new StringBuilder()
 			.AppendLine("└──BinaryExpression")
 			.AppendLine("    ├──BinaryExpression")
 			.AppendLine("    │   ├──NumberExpression")
@@ -54,7 +54,28 @@ public class CheepLexerTests
 			.AppendLine("    ├──PlusToken")
 			.AppendLine("    └──NumberExpression")
 			.AppendLine("        └──NumberToken, 3");
-		UnitTest.Assert.AreEqual(stringBuilder.ToString(), Parser.PrettifyParseTree(expression));
+
+		UnitTest.Assert.AreEqual(expectedSyntaxTree.ToString(), Parser.PrettifySyntaxTree(syntaxTree.Root));
+	}
+
+	[TestMethod]
+	public static void Parser_ReportDiagnostics()
+	{
+		string text = "1 + ";
+		var parser = new Parser(text);
+		var syntaxTree = parser.Parse();
+		StringBuilder expectedDiagnostics = new StringBuilder().AppendLine("ERROR: Unexpected token EOFToken, expected NumberToken");
+		StringBuilder receivedDiagnostics = new StringBuilder();
+
+		if (syntaxTree.Diagnostics.Any())
+		{
+			foreach (var diagnostic in syntaxTree.Diagnostics)
+			{
+				receivedDiagnostics.AppendLine(diagnostic);
+			}
+		}
+
+		UnitTest.Assert.AreEqual(expectedDiagnostics.ToString(), receivedDiagnostics.ToString());
 	}
 }
 

@@ -44,7 +44,7 @@ namespace Cheep
 		}
 
 		/// <summary>
-		/// Gets child syntax nodes in the parse tree
+		/// Gets child syntax nodes in the syntax tree
 		/// </summary>
 		public override IEnumerable<SyntaxNode> GetChildren() => Enumerable.Empty<SyntaxNode>();
 	}
@@ -57,12 +57,18 @@ namespace Cheep
 	{
 		private readonly string _text; // The text which we are analysing and extracting our tokens
 		private int _position; // Current position of the lexer on the text
+		private List<string> _diagnostics = new List<string>(); // For keeping track fo errors and reporting them
 		private char _currentCharacter { get { return _position >= _text.Length ? '\0' : _text[_position]; } } // Gets the current character on the text, based on current _position
 
 		/// <summary>
 		/// Constructor takes in a string and sets _text private readonly property
 		/// </summary>
 		public Lexer(string inText) => _text = inText;
+
+		/// <summary>
+		/// Returns a collection of diagnostics messages collected so far during lexing of tokens
+		/// </summary>
+		public IEnumerable<string> Diagnostics => _diagnostics;
 
 		/// <summary>
 		/// Updates our current position on the text
@@ -106,14 +112,15 @@ namespace Cheep
 			if (_currentCharacter == '(') return new SyntaxToken(SyntaxType.OpenParenthesisToken, _position++, "(", null);
 			if (_currentCharacter == ')') return new SyntaxToken(SyntaxType.CloseParenthesisToken, _position++, ")", null);
 
-			// If nothing found, return a bad token
+			// If nothing found, return a bad token and add an error log into the diagnostics list
+			_diagnostics.Add("ERROR: Bad character input: " + _currentCharacter);
 			return new SyntaxToken(SyntaxType.BadToken, _position++, _text.Substring(_position - 1, 1), null);
 		}
 	}
 
 	/// <summary>
 	/// Base class for syntax nodes of different types.
-	/// Syntax nodes are tokens or expressions on a tree-structure (the parse tree) showing the order which they will be evaluated
+	/// Syntax nodes are tokens or expressions on a tree-structure (the syntax tree) showing the order which they will be evaluated
 	/// </summary>
 	public abstract class SyntaxNode
 	{
@@ -123,7 +130,7 @@ namespace Cheep
 		public abstract SyntaxType Type { get; }
 
 		/// <summary>
-		/// Gets child syntax nodes in the parse tree
+		/// Gets child syntax nodes in the syntax tree
 		/// </summary>
 		public abstract IEnumerable<SyntaxNode> GetChildren();
 	}
@@ -143,7 +150,7 @@ namespace Cheep
 		public NumberExpressionSyntax(SyntaxToken inNumberToken) => NumberToken = inNumberToken;
 
 		/// <summary>
-		/// Gets child syntax nodes in the parse tree
+		/// Gets child syntax nodes in the syntax tree
 		/// </summary>
 		public override IEnumerable<SyntaxNode> GetChildren()
 		{
@@ -169,7 +176,7 @@ namespace Cheep
 		}
 
 		/// <summary>
-		/// Gets child syntax nodes in the parse tree
+		/// Gets child syntax nodes in the syntax tree
 		/// </summary>
 		public override IEnumerable<SyntaxNode> GetChildren()
 		{
@@ -179,14 +186,29 @@ namespace Cheep
 		}
 	}
 
+	public sealed class SyntaxTree
+	{
+		public IReadOnlyList<string> Diagnostics { get; }
+		public ExpressionSyntax Root { get; }
+		public SyntaxToken EOFToken { get; }
+
+		public SyntaxTree(IEnumerable<string> inDiagnostics, ExpressionSyntax inRoot, SyntaxToken inEOFToken)
+		{
+			Diagnostics = inDiagnostics.ToArray();
+			Root = inRoot;
+			EOFToken = inEOFToken;
+		}
+	}
+
 	/// <summary>
 	/// Parses the tokens in a text (i.e. making sense of the series of tokens)
-	/// This is done by arranging the tokens into a parse tree, and then iterating through the syntax nodes and evaluate them
+	/// This is done by arranging the tokens into a syntax tree, and then iterating through the syntax nodes and evaluate them
 	/// </summary>
 	public class Parser
 	{
 		private readonly SyntaxToken[] _tokens;
 		private int _position;
+		private List<string> _diagnostics = new List<string>();
 
 		/// <summary>
 		/// During construction, we will split the text into an array of tokens
@@ -205,7 +227,15 @@ namespace Cheep
 			}  while (token.Type != SyntaxType.EOFToken);
 
 			_tokens = tokens.ToArray();
+
+			// Adding diagnostics from lexer to parser's diagnostics list
+			_diagnostics.AddRange(lexer.Diagnostics);
 		}
+
+		/// <summary>
+		/// Returns a collection of diagnostics messages collected so far during parsing of text
+		/// </summary>
+		public IEnumerable<string> Diagnostics => _diagnostics;
 
 		/// <summary>
 		/// Peeking ahead, relative to current _position in the tokens array
@@ -233,14 +263,23 @@ namespace Cheep
 		}
 
 		/// <summary>
-		/// Get the next token in the tokens array if it's of a certain type. Else return null
+		/// Get the next token in the tokens array if it's of a certain type. Else return error
 		/// </summary>
 		private SyntaxToken Match(SyntaxType inType)
 		{
-			return CurrentToken.Type == inType ? NextToken() : new SyntaxToken(inType, CurrentToken.Position, null, null);
+			if (CurrentToken.Type == inType) return NextToken();
+			_diagnostics.Add("ERROR: Unexpected token " + CurrentToken.Type + ", expected " + inType);
+			return new SyntaxToken(inType, CurrentToken.Position, null, null);
 		}
 
-		public ExpressionSyntax Parse()
+		public SyntaxTree Parse()
+		{
+			var expression = ParseExpression();
+			var eofToken = Match(SyntaxType.EOFToken);
+			return new SyntaxTree(_diagnostics, expression, eofToken);
+		}
+
+		public ExpressionSyntax ParseExpression()
 		{
 			var left = ParsePrimaryExpression();
 
@@ -260,7 +299,10 @@ namespace Cheep
 			return new NumberExpressionSyntax(numberToken);
 		}
 
-		public static string PrettifyParseTree(SyntaxNode node, StringBuilder stringBuilder = null, string indent = "", bool isLast = true)
+		/// <summary>
+		/// For debugging purpose, you can always pass in a syntax node to view its syntax tree
+		/// </summary>
+		public static string PrettifySyntaxTree(SyntaxNode node, StringBuilder stringBuilder = null, string indent = "", bool isLast = true)
 		{
 			var indentMarker = isLast ? "└──" : "├──";
 			stringBuilder = stringBuilder == null ? new StringBuilder() : stringBuilder;
@@ -269,7 +311,7 @@ namespace Cheep
 			stringBuilder.AppendLine();
 			indent += isLast ? "    " : "│   ";
 			var last = node.GetChildren().LastOrDefault();
-			foreach (var child in node.GetChildren()) PrettifyParseTree(child, stringBuilder, indent, child == last);
+			foreach (var child in node.GetChildren()) PrettifySyntaxTree(child, stringBuilder, indent, child == last);
 			return stringBuilder.ToString();
 		}
 	}
