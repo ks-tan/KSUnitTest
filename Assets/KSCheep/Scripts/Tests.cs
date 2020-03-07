@@ -1,13 +1,12 @@
 ﻿#if UNITY_EDITOR
 
 using KSUnitTest;
-using Cheep;
-using UnityEngine;
+using KSCheep.CodeAnalysis;
 using System.Text;
 using System.Linq;
 
 [TestClass]
-public class CheepLexerTests
+public class CheepLexerParserTests
 {
 	[TestMethod]
 	public static void Lexer_CreateTokens()
