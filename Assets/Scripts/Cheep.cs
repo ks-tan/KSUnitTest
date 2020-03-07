@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
@@ -90,18 +91,19 @@ namespace Cheep
 				while (char.IsDigit(_currentCharacter)) Next(); // keep going to the next character if it is a digit
 				var length = _position - start; // after we get all the digits, we find the length of this token..
 				var text = _text.Substring(start, length); // ..so we can get the text value of this token using substring
-				int.TryParse(text, out var value); // we also try to get the value of the token
+				if (!int.TryParse(text, out var value)) // we also try to get the value of the token
+					_diagnostics.Add("ERROR: The number " + _text + " is not a valid int32."); // report an error if number is not a valid int32
 				return new SyntaxToken(SyntaxType.NumberToken, start, text, value); // we construct the new token and return it!
 			}
 
 			// Attempting to get whitespace token
 			if (char.IsWhiteSpace(_currentCharacter))
 			{
-				var start = _position;
-				while (char.IsWhiteSpace(_currentCharacter)) Next();
-				var length = _position - start;
-				var text = _text.Substring(start, length);
-				return new SyntaxToken(SyntaxType.WhitespaceToken, start, text, null);
+				var start = _position; // get current start position
+				while (char.IsWhiteSpace(_currentCharacter)) Next(); // keep going to the next character if it is a whitespace
+				var length = _position - start; // after we get all the whitespaces, we find the length of this whitespace token..
+				var text = _text.Substring(start, length); // .. so we can get the substring of this whitespace token
+				return new SyntaxToken(SyntaxType.WhitespaceToken, start, text, null); // we construct a new whitespace token and return it!
 			}
 
 			// Attempting to get random symbol tokens
@@ -186,6 +188,10 @@ namespace Cheep
 		}
 	}
 
+	/// <summary>
+	/// Identifies the starting syntax node (an expression syntax) and the ending node (an EOF Syntax Token) of the syntax tree
+	/// For now, only acts as the final collection point of all the diagnostic logs from the lexing and parsing of tokens and syntax trees
+	/// </summary>
 	public sealed class SyntaxTree
 	{
 		public IReadOnlyList<string> Diagnostics { get; }
@@ -272,18 +278,44 @@ namespace Cheep
 			return new SyntaxToken(inType, CurrentToken.Position, null, null);
 		}
 
+		/// <summary>
+		/// Parse the entire syntax tree, starting from the first syntax node
+		/// </summary>
 		public SyntaxTree Parse()
 		{
-			var expression = ParseExpression();
+			var expression = ParseTerm();
 			var eofToken = Match(SyntaxType.EOFToken);
 			return new SyntaxTree(_diagnostics, expression, eofToken);
 		}
 
-		public ExpressionSyntax ParseExpression()
+		/// <summary>
+		/// Parsing an expression that uses +- operators
+		/// </summary>
+		public ExpressionSyntax ParseTerm()
 		{
-			var left = ParsePrimaryExpression();
+			// We parse the left factor expression. We build the syntax tree with factor expressions first because +- operations always come last
+			var left = ParseFactor();
 
 			while (CurrentToken.Type == SyntaxType.PlusToken || CurrentToken.Type == SyntaxType.MinusToken)
+			{
+				var operatorToken = NextToken(); // Get the operator token and move to the pointer to the next one
+				var right = ParseFactor(); // With the pointer at the right token, we parse the right factor expression
+				left = new BinaryExpressionSyntax(left, operatorToken, right); // Collapse everything as one binary expression
+			}
+
+			return left;
+		}
+
+		/// <summary>
+		/// Parsing expression that uses */ operators
+		/// </summary>
+		public ExpressionSyntax ParseFactor()
+		{
+			// Similar to how ParseTerm() works, but this time for times and divide
+
+			var left = ParsePrimaryExpression();
+
+			while (CurrentToken.Type == SyntaxType.StarToken || CurrentToken.Type == SyntaxType.SlashToken)
 			{
 				var operatorToken = NextToken();
 				var right = ParsePrimaryExpression();
@@ -293,6 +325,9 @@ namespace Cheep
 			return left;
 		}
 
+		/// <summary>
+		/// A primary expression is an atomic unit that only contains one token. Here, we simply return that token
+		/// </summary>
 		private ExpressionSyntax ParsePrimaryExpression()
 		{
 			var numberToken = Match(SyntaxType.NumberToken);
@@ -302,17 +337,62 @@ namespace Cheep
 		/// <summary>
 		/// For debugging purpose, you can always pass in a syntax node to view its syntax tree
 		/// </summary>
-		public static string PrettifySyntaxTree(SyntaxNode node, StringBuilder stringBuilder = null, string indent = "", bool isLast = true)
+		public static string PrettifySyntaxTree(SyntaxNode inNode, StringBuilder inStringBuilder = null, string inIndent = "", bool inIsLast = true)
 		{
-			var indentMarker = isLast ? "└──" : "├──";
-			stringBuilder = stringBuilder == null ? new StringBuilder() : stringBuilder;
-			stringBuilder.Append(indent + indentMarker + node.Type);
-			if (node is SyntaxToken t && t.Value != null) stringBuilder.Append(", " + t.Value);
-			stringBuilder.AppendLine();
-			indent += isLast ? "    " : "│   ";
-			var last = node.GetChildren().LastOrDefault();
-			foreach (var child in node.GetChildren()) PrettifySyntaxTree(child, stringBuilder, indent, child == last);
-			return stringBuilder.ToString();
+			var indentMarker = inIsLast ? "└──" : "├──";
+			inStringBuilder = inStringBuilder == null ? new StringBuilder() : inStringBuilder;
+			inStringBuilder.Append(inIndent + indentMarker + inNode.Type);
+			if (inNode is SyntaxToken t && t.Value != null) inStringBuilder.Append(", " + t.Value);
+			inStringBuilder.AppendLine();
+			inIndent += inIsLast ? "    " : "│   ";
+			var last = inNode.GetChildren().LastOrDefault();
+			foreach (var child in inNode.GetChildren()) PrettifySyntaxTree(child, inStringBuilder, inIndent, child == last);
+			return inStringBuilder.ToString();
+		}
+	}
+
+	/// <summary>
+	/// Evaluates an expression syntax
+	/// </summary>
+	public class Evaluator
+	{
+		private readonly ExpressionSyntax _root;
+
+		/// <summary>
+		/// To construct the evaluator, we pass in the root syntax node of the syntax tree we wish to evaluate
+		/// </summary>
+		public Evaluator(ExpressionSyntax inRoot) => _root = inRoot;
+
+		/// <summary>
+		/// Evaluate an expression starting from the root node of its syntax tree
+		/// </summary>
+		/// <returns></returns>
+		public int Evaluate() => EvaluateExpression(_root);
+
+		/// <summary>
+		/// Evaluate an expression starting from the root node of its syntax tree
+		/// </summary>
+		private int EvaluateExpression(ExpressionSyntax inNode)
+		{
+			// Evaluate a number expression. Just returns the number token
+			if (inNode is NumberExpressionSyntax number)
+			{
+				return (int)number.NumberToken.Value;
+			}
+
+			// Evaluate the binary expression. Gets the left and right expression, identify the operator token between them, and perform operation
+			if (inNode is BinaryExpressionSyntax binary)
+			{
+				var leftExpression = EvaluateExpression(binary.LeftExpression);
+				var rightExpression = EvaluateExpression(binary.RightExpression);
+				if (binary.OperatorToken.Type == SyntaxType.PlusToken) return leftExpression + rightExpression;
+				else if (binary.OperatorToken.Type == SyntaxType.MinusToken) return leftExpression - rightExpression;
+				else if (binary.OperatorToken.Type == SyntaxType.StarToken) return leftExpression * rightExpression;
+				else if (binary.OperatorToken.Type == SyntaxType.SlashToken) return leftExpression / rightExpression;
+				else throw new Exception("Unexpected binary operator " + binary.OperatorToken.Type);
+			}
+
+			throw new Exception("Unexpected node " + inNode.Type);
 		}
 	}
 }

@@ -77,6 +77,32 @@ public class CheepLexerTests
 
 		UnitTest.Assert.AreEqual(expectedDiagnostics.ToString(), receivedDiagnostics.ToString());
 	}
+
+	[TestMethod]
+	public static void Evaluator_EvaluateExpression()
+	{
+		string text = "1 + 2 * 3";
+		var parser = new Parser(text);
+		var syntaxTree = parser.Parse();
+		StringBuilder expectedResult = new StringBuilder().AppendLine("7");
+		StringBuilder receivedResult = new StringBuilder();
+
+		if (syntaxTree.Diagnostics.Any())
+		{
+			foreach(var diagnostic in syntaxTree.Diagnostics)
+			{
+				receivedResult.AppendLine(diagnostic);
+			}
+		}
+		else
+		{
+			var evaluator = new Evaluator(syntaxTree.Root);
+			var result = evaluator.Evaluate();
+			receivedResult.AppendLine(result.ToString());
+		}
+
+		UnitTest.Assert.AreEqual(expectedResult.ToString(), receivedResult.ToString());
+	}
 }
 
 #endif
