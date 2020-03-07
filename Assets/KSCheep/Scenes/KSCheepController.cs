@@ -6,8 +6,8 @@ using UnityEngine.UI;
 
 public class KSCheepController : MonoBehaviour
 {
-	[SerializeField] private Text _inputTextUI = null; // the input text field
-	[SerializeField] private Text _inputCursorUI = null; // the text field that holds the cursor
+	[SerializeField] private TextMeshProUGUI _inputTextUI = null; // the input text field
+	[SerializeField] private TextMeshProUGUI _inputCursorUI = null; // the text field that holds the cursor
 
 	private string _inputText = ""; // the entire input field's text
 	private int _currentCursorIndex = 0; // the index on the input string our cursor should be at
@@ -76,9 +76,7 @@ public class KSCheepController : MonoBehaviour
 			}
 
 			_inputTextUI.text = _inputText;
-
-			string cursorText = _inputText.Substring(0, Mathf.Max(0, _currentCursorIndex));
-			_inputCursorUI.text = cursorText + '_';
+			_inputCursorUI.text = _inputText.Substring(0, Mathf.Max(0, _currentCursorIndex)) + '_';
 		}
 	}
 }
