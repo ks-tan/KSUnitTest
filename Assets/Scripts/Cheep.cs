@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace Cheep
 {
@@ -257,6 +258,19 @@ namespace Cheep
 		{
 			var numberToken = Match(SyntaxType.NumberToken);
 			return new NumberExpressionSyntax(numberToken);
+		}
+
+		public static string PrettifyParseTree(SyntaxNode node, StringBuilder stringBuilder = null, string indent = "", bool isLast = true)
+		{
+			var indentMarker = isLast ? "└──" : "├──";
+			stringBuilder = stringBuilder == null ? new StringBuilder() : stringBuilder;
+			stringBuilder.Append(indent + indentMarker + node.Type);
+			if (node is SyntaxToken t && t.Value != null) stringBuilder.Append(", " + t.Value);
+			stringBuilder.AppendLine();
+			indent += isLast ? "    " : "│   ";
+			var last = node.GetChildren().LastOrDefault();
+			foreach (var child in node.GetChildren()) PrettifyParseTree(child, stringBuilder, indent, child == last);
+			return stringBuilder.ToString();
 		}
 	}
 }

@@ -4,6 +4,7 @@ using KSUnitTest;
 using Cheep;
 using UnityEngine;
 using System.Text;
+using System.Linq;
 
 [TestClass]
 public class CheepLexerTests
@@ -43,28 +44,17 @@ public class CheepLexerTests
 		var expression = parser.Parse();
 		StringBuilder stringBuilder = new StringBuilder();
 		stringBuilder
-			.AppendLine("BinaryExpression")
-			.AppendLine("....BinaryExpression")
-			.AppendLine("........NumberExpression")
-			.AppendLine("............NumberToken, 1")
-			.AppendLine("........PlusToken")
-			.AppendLine("........NumberExpression")
-			.AppendLine("............NumberToken, 2")
-			.AppendLine("....PlusToken")
-			.AppendLine("....NumberExpression")
-			.AppendLine("........NumberToken, 3");
-		UnitTest.Assert.AreEqual(stringBuilder.ToString(), PrettifyExpression(expression));
-	}
-
-	private static string PrettifyExpression(SyntaxNode node, string indent = "")
-	{
-		StringBuilder stringBuilder = new StringBuilder();
-		stringBuilder.Append(indent + node.Type);
-		if (node is SyntaxToken t && t.Value != null) stringBuilder.Append(", " + t.Value);
-		stringBuilder.AppendLine();
-		indent += "....";
-		foreach (var child in node.GetChildren()) stringBuilder.Append(PrettifyExpression(child, indent));
-		return stringBuilder.ToString();
+			.AppendLine("└──BinaryExpression")
+			.AppendLine("    ├──BinaryExpression")
+			.AppendLine("    │   ├──NumberExpression")
+			.AppendLine("    │   │   └──NumberToken, 1")
+			.AppendLine("    │   ├──PlusToken")
+			.AppendLine("    │   └──NumberExpression")
+			.AppendLine("    │       └──NumberToken, 2")
+			.AppendLine("    ├──PlusToken")
+			.AppendLine("    └──NumberExpression")
+			.AppendLine("        └──NumberToken, 3");
+		UnitTest.Assert.AreEqual(stringBuilder.ToString(), Parser.PrettifyParseTree(expression));
 	}
 }
 
