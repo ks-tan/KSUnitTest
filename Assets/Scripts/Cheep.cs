@@ -21,7 +21,8 @@ namespace Cheep
 		BadToken, // error/no such token type
 		EOFToken, // end of file
 		BinaryExpression, // <left expression><operator token><right expression>
-		NumberExpression // <number token>
+		NumberExpression, // <number token>
+		ParenthesisedExpression // ( <expression> )
 	}
 
 	/// <summary>
@@ -189,6 +190,34 @@ namespace Cheep
 	}
 
 	/// <summary>
+	/// An expression that looks like ( <expression> )
+	/// </summary>
+	sealed class ParenthesisedExpression : ExpressionSyntax
+	{
+		public override SyntaxType Type => SyntaxType.ParenthesisedExpression;
+		public SyntaxToken OpenParenthesisToken { get; }
+		public ExpressionSyntax Expression { get; }
+		public SyntaxToken CloseParenthesisToken { get; }
+
+		public ParenthesisedExpression(SyntaxToken inOpenParenthesisToken, ExpressionSyntax inExpression, SyntaxToken inCloseParenthesisToken)
+		{
+			OpenParenthesisToken = inOpenParenthesisToken;
+			Expression = inExpression;
+			CloseParenthesisToken = inCloseParenthesisToken;
+		}
+
+		/// <summary>
+		/// Gets child syntax nodes in the syntax tree
+		/// </summary>
+		public override IEnumerable<SyntaxNode> GetChildren()
+		{
+			yield return OpenParenthesisToken;
+			yield return Expression;
+			yield return CloseParenthesisToken;
+		}
+	}
+
+	/// <summary>
 	/// Identifies the starting syntax node (an expression syntax) and the ending node (an EOF Syntax Token) of the syntax tree
 	/// For now, only acts as the final collection point of all the diagnostic logs from the lexing and parsing of tokens and syntax trees
 	/// </summary>
@@ -289,6 +318,11 @@ namespace Cheep
 		}
 
 		/// <summary>
+		/// A helper method to parse an expression
+		/// </summary>
+		private ExpressionSyntax ParseExpression() => ParseTerm();
+
+		/// <summary>
 		/// Parsing an expression that uses +- operators
 		/// </summary>
 		public ExpressionSyntax ParseTerm()
@@ -330,6 +364,14 @@ namespace Cheep
 		/// </summary>
 		private ExpressionSyntax ParsePrimaryExpression()
 		{
+			if (CurrentToken.Type == SyntaxType.OpenParenthesisToken)
+			{
+				var openParenthesisToken = NextToken();
+				var expression = ParseExpression();
+				var closeParenthesisToken = Match(SyntaxType.CloseParenthesisToken);
+				return new ParenthesisedExpression(openParenthesisToken, expression, closeParenthesisToken);
+			}
+
 			var numberToken = Match(SyntaxType.NumberToken);
 			return new NumberExpressionSyntax(numberToken);
 		}
@@ -390,6 +432,12 @@ namespace Cheep
 				else if (binary.OperatorToken.Type == SyntaxType.StarToken) return leftExpression * rightExpression;
 				else if (binary.OperatorToken.Type == SyntaxType.SlashToken) return leftExpression / rightExpression;
 				else throw new Exception("Unexpected binary operator " + binary.OperatorToken.Type);
+			}
+
+			// Evaluate a parenthesised expression. We only evaluate the "expression" within the parenthesis
+			if (inNode is ParenthesisedExpression parenthesisedExpression)
+			{
+				return EvaluateExpression(parenthesisedExpression.Expression);
 			}
 
 			throw new Exception("Unexpected node " + inNode.Type);

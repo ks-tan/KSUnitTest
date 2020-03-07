@@ -81,10 +81,10 @@ public class CheepLexerTests
 	[TestMethod]
 	public static void Evaluator_EvaluateExpression()
 	{
-		string text = "1 + 2 * 3";
+		string text = "4 + (1 + 2) * 3";
 		var parser = new Parser(text);
 		var syntaxTree = parser.Parse();
-		StringBuilder expectedResult = new StringBuilder().AppendLine("7");
+		StringBuilder expectedResult = new StringBuilder().AppendLine("13");
 		StringBuilder receivedResult = new StringBuilder();
 
 		if (syntaxTree.Diagnostics.Any())
