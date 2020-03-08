@@ -88,26 +88,6 @@ namespace KSCheep.CodeAnalysis
 		}
 
 		/// <summary>
-		/// Helps us get the different precedence between operators, to determine how the syntax tree should be constructed when we parse an expression
-		/// </summary>
-		private static int GetBinaryOperatorPrecedence(SyntaxType inType)
-		{
-			switch(inType)
-			{
-				case (SyntaxType.StarToken):
-				case (SyntaxType.SlashToken):
-					return 2;
-
-				case (SyntaxType.PlusToken):
-				case (SyntaxType.MinusToken):
-					return 1;
-
-				default: // i.e. this is not a binary operator
-					return 0;
-			}
-		}
-
-		/// <summary>
 		/// Building the expression tree based on precedence of operators
 		/// </summary>
 		private ExpressionSyntax ParseExpression(int inParentPrecedence = 0)
@@ -116,7 +96,7 @@ namespace KSCheep.CodeAnalysis
 
 			while (true)
 			{
-				var precedence = GetBinaryOperatorPrecedence(CurrentToken.Type);
+				var precedence = CurrentToken.Type.GetBinaryOperatorPrecedence();
 				if (precedence == 0 || precedence < inParentPrecedence) break;
 				var operatorToken = NextToken();
 				var right = ParseExpression(precedence);

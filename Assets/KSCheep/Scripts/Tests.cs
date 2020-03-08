@@ -36,33 +36,11 @@ public class CheepLexerParserTests
 	}
 
 	[TestMethod]
-	public static void Parser_CreateSyntaxTree()
-	{
-		string text = "1 + 2 + 3";
-		var parser = new Parser(text);
-		var syntaxTree = parser.Parse();
-
-		StringBuilder expectedSyntaxTree = new StringBuilder()
-			.AppendLine("└──BinaryExpression")
-			.AppendLine("    ├──BinaryExpression")
-			.AppendLine("    │   ├──NumberExpression")
-			.AppendLine("    │   │   └──NumberToken, 1")
-			.AppendLine("    │   ├──PlusToken")
-			.AppendLine("    │   └──NumberExpression")
-			.AppendLine("    │       └──NumberToken, 2")
-			.AppendLine("    ├──PlusToken")
-			.AppendLine("    └──NumberExpression")
-			.AppendLine("        └──NumberToken, 3");
-
-		UnitTest.Assert.AreEqual(expectedSyntaxTree.ToString(), Parser.PrettifySyntaxTree(syntaxTree.Root));
-	}
-
-	[TestMethod]
 	public static void Parser_ReportDiagnostics()
 	{
 		string text = "1 + ";
 		var syntaxTree = new Parser(text).Parse();
-		StringBuilder expectedDiagnostics = new StringBuilder().AppendLine("ERROR: Unexpected token EOFToken, expected NumberToken");
+		StringBuilder expectedDiagnostics = new StringBuilder().AppendLine("ERROR: Unexpected token EndOfFileToken, expected NumberToken");
 		StringBuilder receivedDiagnostics = new StringBuilder();
 
 		if (syntaxTree.Diagnostics.Any())
