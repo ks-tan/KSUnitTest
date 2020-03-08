@@ -8,7 +8,7 @@ namespace KSCheep.CodeAnalysis
 	/// <summary>
 	/// Evaluates an expression syntax
 	/// </summary>
-	public class Evaluator
+	public sealed class Evaluator
 	{
 		private readonly ExpressionSyntax _root;
 
@@ -29,9 +29,9 @@ namespace KSCheep.CodeAnalysis
 		private int EvaluateExpression(ExpressionSyntax inNode)
 		{
 			// Evaluate a number expression. Just returns the number token
-			if (inNode is NumberExpressionSyntax number)
+			if (inNode is LiteralExpressionSyntax number)
 			{
-				return (int)number.NumberToken.Value;
+				return (int)number.LiteralToken.Value;
 			}
 
 			// Evaluate the binary expression. Gets the left and right expression, identify the operator token between them, and perform operation

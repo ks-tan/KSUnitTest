@@ -11,6 +11,7 @@ public class CheepTerminal : MonoBehaviour
 	[SerializeField] private TMP_InputField _consoleField = null;
 
 	private StringBuilder _stringBuilder = new StringBuilder();
+	private bool _shouldShowTree = false;
 
 	IEnumerator InvokeOnNextFrame(System.Action onComplete)
 	{
@@ -33,6 +34,10 @@ public class CheepTerminal : MonoBehaviour
 				{
 					StartCoroutine(InvokeOnNextFrame(() => { _inputField.text = ""; _consoleField.text = ""; }));
 				}
+				else if (inputLines[inputLines.Length - 1].ToLower() == "showtree")
+				{
+					_shouldShowTree = !_shouldShowTree;
+				}
 				else
 				{
 					foreach (var input in inputLines)
@@ -51,6 +56,11 @@ public class CheepTerminal : MonoBehaviour
 							var evaluator = new Evaluator(syntaxTree.Root);
 							var result = evaluator.Evaluate();
 							_stringBuilder.AppendLine(result.ToString());
+
+							if (_shouldShowTree)
+							{
+								_stringBuilder.AppendLine(Parser.PrettifySyntaxTree(syntaxTree.Root));
+							}
 						}
 					}
 

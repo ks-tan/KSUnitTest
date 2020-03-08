@@ -10,18 +10,21 @@ namespace KSCheep.CodeAnalysis
 	/// </summary>
 	public enum SyntaxType
 	{
-		NumberToken, // 12345
+		// Tokens
+		BadToken, // error/no such token type
+		EndOfFileToken, // end of file
 		WhitespaceToken, //" "
+		NumberToken, // 12345
 		PlusToken, // +
 		MinusToken, // -
 		StarToken, // *
 		SlashToken, // "/"
 		CloseParenthesisToken, // ")"
 		OpenParenthesisToken, // "("
-		BadToken, // error/no such token type
-		EOFToken, // end of file
-		BinaryExpression, // <left expression><operator token><right expression>
+
+		// Expressions
 		NumberExpression, // <number token>
+		BinaryExpression, // <left expression><operator token><right expression>
 		ParenthesisedExpression // ( <expression> )
 	}
 
@@ -76,18 +79,18 @@ namespace KSCheep.CodeAnalysis
 	/// <summary>
 	/// An expression that holds a number token
 	/// </summary>
-	sealed class NumberExpressionSyntax : ExpressionSyntax
+	sealed class LiteralExpressionSyntax : ExpressionSyntax
 	{
 		public override SyntaxType Type => SyntaxType.NumberExpression;
-		public SyntaxToken NumberToken { get; }
-		public NumberExpressionSyntax(SyntaxToken inNumberToken) => NumberToken = inNumberToken;
+		public SyntaxToken LiteralToken { get; }
+		public LiteralExpressionSyntax(SyntaxToken inLiteralToken) => LiteralToken = inLiteralToken;
 
 		/// <summary>
 		/// Gets child syntax nodes in the syntax tree
 		/// </summary>
 		public override IEnumerable<SyntaxNode> GetChildren()
 		{
-			yield return NumberToken;
+			yield return LiteralToken;
 		}
 	}
 

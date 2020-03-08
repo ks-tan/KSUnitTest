@@ -19,7 +19,7 @@ public class CheepLexerParserTests
 		{
 			SyntaxToken token = lexer.NextToken();
 
-			if (token.Type == SyntaxType.EOFToken)
+			if (token.Type == SyntaxType.EndOfFileToken)
 			{
 				break;
 			}

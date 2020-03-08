@@ -9,7 +9,7 @@ namespace KSCheep.CodeAnalysis
 	/// Analyse a piece of text and find its tokens, with type and value.
 	/// This is done by going through each character in the text and decide how to group them according to their token type
 	/// </summary>
-	public class Lexer
+	public sealed class Lexer
 	{
 		private readonly string _text; // The text which we are analysing and extracting our tokens
 		private int _position; // Current position of the lexer on the text
@@ -37,7 +37,7 @@ namespace KSCheep.CodeAnalysis
 		public SyntaxToken NextToken()
 		{
 			// Returns an end of file token when there are not more characters to read (end of the text string)
-			if (_position >= _text.Length) return new SyntaxToken(SyntaxType.EOFToken, _position, "\0", null);
+			if (_position >= _text.Length) return new SyntaxToken(SyntaxType.EndOfFileToken, _position, "\0", null);
 
 			// Attempting to get a number token
 			if (char.IsDigit(_currentCharacter))

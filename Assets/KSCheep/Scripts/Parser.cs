@@ -9,7 +9,7 @@ namespace KSCheep.CodeAnalysis
 	/// Parses the tokens in a text (i.e. making sense of the series of tokens)
 	/// This is done by arranging the tokens into a syntax tree, and then iterating through the syntax nodes and evaluate them
 	/// </summary>
-	public class Parser
+	public sealed class Parser
 	{
 		private readonly SyntaxToken[] _tokens;
 		private int _position;
@@ -29,7 +29,7 @@ namespace KSCheep.CodeAnalysis
 				token = lexer.NextToken();
 				if (token.Type != SyntaxType.WhitespaceToken && token.Type != SyntaxType.BadToken) tokens.Add(token);
 
-			}  while (token.Type != SyntaxType.EOFToken);
+			}  while (token.Type != SyntaxType.EndOfFileToken);
 
 			_tokens = tokens.ToArray();
 
@@ -70,7 +70,7 @@ namespace KSCheep.CodeAnalysis
 		/// <summary>
 		/// Get the next token in the tokens array if it's of a certain type. Else return error
 		/// </summary>
-		private SyntaxToken Match(SyntaxType inType)
+		private SyntaxToken MatchToken(SyntaxType inType)
 		{
 			if (CurrentToken.Type == inType) return NextToken();
 			_diagnostics.Add("ERROR: Unexpected token " + CurrentToken.Type + ", expected " + inType);
@@ -82,8 +82,8 @@ namespace KSCheep.CodeAnalysis
 		/// </summary>
 		public SyntaxTree Parse()
 		{
-			var expression = ParseTerm();
-			var eofToken = Match(SyntaxType.EOFToken);
+			var expression = ParseExpression();
+			var eofToken = MatchToken(SyntaxType.EndOfFileToken);
 			return new SyntaxTree(_diagnostics, expression, eofToken);
 		}
 
@@ -138,12 +138,12 @@ namespace KSCheep.CodeAnalysis
 			{
 				var openParenthesisToken = NextToken();
 				var expression = ParseExpression();
-				var closeParenthesisToken = Match(SyntaxType.CloseParenthesisToken);
+				var closeParenthesisToken = MatchToken(SyntaxType.CloseParenthesisToken);
 				return new ParenthesisedExpressionSyntax(openParenthesisToken, expression, closeParenthesisToken);
 			}
 
-			var numberToken = Match(SyntaxType.NumberToken);
-			return new NumberExpressionSyntax(numberToken);
+			var numberToken = MatchToken(SyntaxType.NumberToken);
+			return new LiteralExpressionSyntax(numberToken);
 		}
 
 		/// <summary>
