@@ -7,7 +7,7 @@ namespace KSCheep.CodeAnalysis.Syntax
 {
 	/// <summary>
 	/// Parses the tokens in a text (i.e. making sense of a series of tokens)
-	/// This means going through each token in the piece of text and placing them in a syntax tree based on their syntax type.
+	/// This means going through each token in the piece of text and placing them in a syntax tree based on their syntax kind.
 	/// Their position on the syntax tree will determine the order which they will be evaluated (e.g. parenthesised expressions first, and etc)
 	/// </summary>
 	public sealed class Parser
@@ -28,9 +28,9 @@ namespace KSCheep.CodeAnalysis.Syntax
 			do
 			{
 				token = lexer.NextToken();
-				if (token.Type != SyntaxType.WhitespaceToken && token.Type != SyntaxType.BadToken) tokens.Add(token);
+				if (token.Kind != SyntaxKind.WhitespaceToken && token.Kind != SyntaxKind.BadToken) tokens.Add(token);
 
-			}  while (token.Type != SyntaxType.EndOfFileToken);
+			}  while (token.Kind != SyntaxKind.EndOfFileToken);
 
 			_tokens = tokens.ToArray();
 
@@ -71,11 +71,11 @@ namespace KSCheep.CodeAnalysis.Syntax
 		/// <summary>
 		/// Get the next token in the tokens array if it's of a certain type. Else return error
 		/// </summary>
-		private SyntaxToken MatchToken(SyntaxType inType)
+		private SyntaxToken MatchToken(SyntaxKind inKind)
 		{
-			if (CurrentToken.Type == inType) return NextToken();
-			_diagnostics.Add("ERROR: Unexpected token " + CurrentToken.Type + ", expected " + inType);
-			return new SyntaxToken(inType, CurrentToken.Position, null, null);
+			if (CurrentToken.Kind == inKind) return NextToken();
+			_diagnostics.Add("ERROR: Unexpected token " + CurrentToken.Kind + ", expected " + inKind);
+			return new SyntaxToken(inKind, CurrentToken.Position, null, null);
 		}
 
 		/// <summary>
@@ -84,7 +84,7 @@ namespace KSCheep.CodeAnalysis.Syntax
 		public SyntaxTree Parse()
 		{
 			var expression = ParseExpression();
-			var eofToken = MatchToken(SyntaxType.EndOfFileToken);
+			var eofToken = MatchToken(SyntaxKind.EndOfFileToken);
 			return new SyntaxTree(_diagnostics, expression, eofToken);
 		}
 
@@ -96,7 +96,7 @@ namespace KSCheep.CodeAnalysis.Syntax
 		private ExpressionSyntax ParseExpression(int inParentPrecedence = 0)
 		{
 			ExpressionSyntax left;
-			var unaryOperatorPrecedence = CurrentToken.Type.GetUnaryOperatorPrecedence();
+			var unaryOperatorPrecedence = CurrentToken.Kind.GetUnaryOperatorPrecedence();
 
 			// If current token is a unary operator (i.e. UnaryOperatorPrecedenc != 0) and it is more than parent precedence, we put it first (i.e. lower) in the syntax tree
 			if (unaryOperatorPrecedence != 0 && unaryOperatorPrecedence >= inParentPrecedence)
@@ -113,7 +113,7 @@ namespace KSCheep.CodeAnalysis.Syntax
 			// After settling the unary expression, if there exists more tokens after it (i.e. an operator and right expression), we shall parse this "binary expression"
 			while (true)
 			{
-				var precedence = CurrentToken.Type.GetBinaryOperatorPrecedence(); // Getting the precedence of the current token
+				var precedence = CurrentToken.Kind.GetBinaryOperatorPrecedence(); // Getting the precedence of the current token
 				if (precedence == 0 || precedence < inParentPrecedence) break; // If precedence = 0 (i.e. no tokens), or if it is less than the parent (not part of current expression, but the next one), we shall break
 				var operatorToken = NextToken(); // Get current token and proceed to the next one
 				var right = ParseExpression(precedence); // Recursively parse the "right-side" of the binary expression
@@ -129,15 +129,15 @@ namespace KSCheep.CodeAnalysis.Syntax
 		/// </summary>
 		private ExpressionSyntax ParsePrimaryExpression()
 		{
-			if (CurrentToken.Type == SyntaxType.OpenParenthesisToken)
+			if (CurrentToken.Kind == SyntaxKind.OpenParenthesisToken)
 			{
 				var openParenthesisToken = NextToken();
 				var expression = ParseExpression();
-				var closeParenthesisToken = MatchToken(SyntaxType.CloseParenthesisToken);
+				var closeParenthesisToken = MatchToken(SyntaxKind.CloseParenthesisToken);
 				return new ParenthesisedExpressionSyntax(openParenthesisToken, expression, closeParenthesisToken);
 			}
 
-			var numberToken = MatchToken(SyntaxType.NumberToken);
+			var numberToken = MatchToken(SyntaxKind.NumberToken);
 			return new LiteralExpressionSyntax(numberToken);
 		}
 
@@ -148,7 +148,7 @@ namespace KSCheep.CodeAnalysis.Syntax
 		{
 			var indentMarker = inIsLast ? "└──" : "├──";
 			inStringBuilder = inStringBuilder == null ? new StringBuilder() : inStringBuilder;
-			inStringBuilder.Append(inIndent + indentMarker + inNode.Type);
+			inStringBuilder.Append(inIndent + indentMarker + inNode.Kind);
 			if (inNode is SyntaxToken t && t.Value != null) inStringBuilder.Append(", " + t.Value);
 			inStringBuilder.AppendLine();
 			inIndent += inIsLast ? "    " : "│   ";

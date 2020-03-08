@@ -8,7 +8,7 @@ namespace KSCheep.CodeAnalysis.Syntax
 	/// <summary>
 	/// Declares the different type of syntax tokens you will find in a piece of text
 	/// </summary>
-	public enum SyntaxType
+	public enum SyntaxKind
 	{
 		// Tokens
 		BadToken, // error/no such token type
@@ -37,12 +37,12 @@ namespace KSCheep.CodeAnalysis.Syntax
 		/// <summary>
 		/// Helps us get the precedence of unary operators
 		/// </summary>
-		public static int GetUnaryOperatorPrecedence(this SyntaxType inType)
+		public static int GetUnaryOperatorPrecedence(this SyntaxKind inKind)
 		{
-			switch (inType)
+			switch (inKind)
 			{
-				case (SyntaxType.PlusToken):
-				case (SyntaxType.MinusToken):
+				case (SyntaxKind.PlusToken):
+				case (SyntaxKind.MinusToken):
 					return 3;
 
 				default: // i.e. this is not a unary operator
@@ -53,16 +53,16 @@ namespace KSCheep.CodeAnalysis.Syntax
 		/// <summary>
 		/// Helps us get the different precedence between operators, to determine how the syntax tree should be constructed when we parse an expression
 		/// </summary>
-		public static int GetBinaryOperatorPrecedence(this SyntaxType inType)
+		public static int GetBinaryOperatorPrecedence(this SyntaxKind inKind)
 		{
-			switch (inType)
+			switch (inKind)
 			{
-				case (SyntaxType.StarToken):
-				case (SyntaxType.SlashToken):
+				case (SyntaxKind.StarToken):
+				case (SyntaxKind.SlashToken):
 					return 2;
 
-				case (SyntaxType.PlusToken):
-				case (SyntaxType.MinusToken):
+				case (SyntaxKind.PlusToken):
+				case (SyntaxKind.MinusToken):
 					return 1;
 
 				default: // i.e. this is not a binary operator
@@ -78,9 +78,9 @@ namespace KSCheep.CodeAnalysis.Syntax
 	public abstract class SyntaxNode
 	{
 		/// <summary>
-		/// The syntax type of this node, determining what type of token or expression it is
+		/// The syntax type of this node, determining what kind of token or expression it is
 		/// </summary>
-		public abstract SyntaxType Type { get; }
+		public abstract SyntaxKind Kind { get; }
 
 		/// <summary>
 		/// Gets child syntax nodes in the syntax tree
@@ -89,20 +89,20 @@ namespace KSCheep.CodeAnalysis.Syntax
 	}
 
 	/// <summary>
-	/// A token is a unit in an expression that defines its type and value.
+	/// A token is a unit in an expression that defines its syntax kind and value.
 	/// For example, "1" is a number of value 1, and "+" is a plus symbol with value null
 	/// They are also Syntax Nodes, i.e. the leaves in our syntax tree used in parsing/evaluating the text
 	/// </summary>
 	public class SyntaxToken : SyntaxNode
 	{
-		public override SyntaxType Type { get; } // Token type
+		public override SyntaxKind Kind { get; } // Token type
 		public int Position { get; } // Its position on the expression
 		public string Text { get; } // Its string representation on the expression
 		public object Value { get; } // Its true value, whether it is a number, string, bool, or etc.
 
-		public SyntaxToken(SyntaxType inType, int inPosition, string inText, object inValue)
+		public SyntaxToken(SyntaxKind inKind, int inPosition, string inText, object inValue)
 		{
-			Type = inType;
+			Kind = inKind;
 			Position = inPosition;
 			Text = inText;
 			Value = inValue;
@@ -124,7 +124,7 @@ namespace KSCheep.CodeAnalysis.Syntax
 	/// </summary>
 	sealed class LiteralExpressionSyntax : ExpressionSyntax
 	{
-		public override SyntaxType Type => SyntaxType.LiteralExpression;
+		public override SyntaxKind Kind => SyntaxKind.LiteralExpression;
 		public SyntaxToken LiteralToken { get; }
 		public LiteralExpressionSyntax(SyntaxToken inLiteralToken) => LiteralToken = inLiteralToken;
 
@@ -142,7 +142,7 @@ namespace KSCheep.CodeAnalysis.Syntax
 	/// </summary>
 	sealed class UnaryExpressionSyntax : ExpressionSyntax
 	{
-		public override SyntaxType Type => SyntaxType.UnaryExpression;
+		public override SyntaxKind Kind => SyntaxKind.UnaryExpression;
 		public SyntaxToken OperatorToken { get; }
 		public ExpressionSyntax OperandExpression { get; }
 
@@ -167,7 +167,7 @@ namespace KSCheep.CodeAnalysis.Syntax
 	/// </summary>
 	sealed class BinaryExpressionSyntax : ExpressionSyntax
 	{
-		public override SyntaxType Type => SyntaxType.BinaryExpression;
+		public override SyntaxKind Kind => SyntaxKind.BinaryExpression;
 		public ExpressionSyntax LeftExpression { get; }
 		public SyntaxToken OperatorToken { get; }
 		public ExpressionSyntax RightExpression { get; }
@@ -195,7 +195,7 @@ namespace KSCheep.CodeAnalysis.Syntax
 	/// </summary>
 	sealed class ParenthesisedExpressionSyntax : ExpressionSyntax
 	{
-		public override SyntaxType Type => SyntaxType.ParenthesisedExpression;
+		public override SyntaxKind Kind => SyntaxKind.ParenthesisedExpression;
 		public SyntaxToken OpenParenthesisToken { get; }
 		public ExpressionSyntax Expression { get; }
 		public SyntaxToken CloseParenthesisToken { get; }

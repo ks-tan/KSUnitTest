@@ -20,14 +20,14 @@ public class CheepLexerParserTests
 		{
 			SyntaxToken token = lexer.NextToken();
 
-			if (token.Type == SyntaxType.EndOfFileToken)
+			if (token.Kind == SyntaxKind.EndOfFileToken)
 			{
 				break;
 			}
 
 			if (tokenIndex == 4)
 			{
-				UnitTest.Assert.AreEqual(SyntaxType.NumberToken, token.Type);
+				UnitTest.Assert.AreEqual(SyntaxKind.NumberToken, token.Kind);
 				UnitTest.Assert.AreEqual(2, token.Value);
 				break;
 			}

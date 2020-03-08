@@ -36,9 +36,9 @@ namespace KSCheep.CodeAnalysis
 			if (inNode is UnaryExpressionSyntax unary)
 			{
 				var operandExpression = EvaluateExpression(unary.OperandExpression);
-				if (unary.OperatorToken.Type == SyntaxType.MinusToken) return -operandExpression;
-				else if (unary.OperatorToken.Type == SyntaxType.PlusToken) return operandExpression;
-				else throw new Exception("Unexpected unary operator " + unary.OperatorToken.Type);
+				if (unary.OperatorToken.Kind == SyntaxKind.MinusToken) return -operandExpression;
+				else if (unary.OperatorToken.Kind == SyntaxKind.PlusToken) return operandExpression;
+				else throw new Exception("Unexpected unary operator " + unary.OperatorToken.Kind);
 			}
 
 			// Evaluate the binary expression. Gets the left and right expression, identify the operator token between them, and perform operation
@@ -46,11 +46,11 @@ namespace KSCheep.CodeAnalysis
 			{
 				var leftExpression = EvaluateExpression(binary.LeftExpression);
 				var rightExpression = EvaluateExpression(binary.RightExpression);
-				if (binary.OperatorToken.Type == SyntaxType.PlusToken) return leftExpression + rightExpression;
-				else if (binary.OperatorToken.Type == SyntaxType.MinusToken) return leftExpression - rightExpression;
-				else if (binary.OperatorToken.Type == SyntaxType.StarToken) return leftExpression * rightExpression;
-				else if (binary.OperatorToken.Type == SyntaxType.SlashToken) return leftExpression / rightExpression;
-				else throw new Exception("Unexpected binary operator " + binary.OperatorToken.Type);
+				if (binary.OperatorToken.Kind == SyntaxKind.PlusToken) return leftExpression + rightExpression;
+				else if (binary.OperatorToken.Kind == SyntaxKind.MinusToken) return leftExpression - rightExpression;
+				else if (binary.OperatorToken.Kind == SyntaxKind.StarToken) return leftExpression * rightExpression;
+				else if (binary.OperatorToken.Kind == SyntaxKind.SlashToken) return leftExpression / rightExpression;
+				else throw new Exception("Unexpected binary operator " + binary.OperatorToken.Kind);
 			}
 
 			// Evaluate a parenthesised expression. We only evaluate the "expression" within the parenthesis
@@ -59,7 +59,7 @@ namespace KSCheep.CodeAnalysis
 				return EvaluateExpression(parenthesisedExpression.Expression);
 			}
 
-			throw new Exception("Unexpected node " + inNode.Type);
+			throw new Exception("Unexpected node " + inNode.Kind);
 		}
 	}
 }
