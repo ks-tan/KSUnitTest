@@ -23,7 +23,7 @@ namespace KSCheep.CodeAnalysis
 		OpenParenthesisToken, // "("
 
 		// Expressions
-		NumberExpression, // <number token>
+		LiteralExpression, // <literal token>
 		BinaryExpression, // <left expression><operator token><right expression>
 		ParenthesisedExpression // ( <expression> )
 	}
@@ -81,7 +81,7 @@ namespace KSCheep.CodeAnalysis
 	/// </summary>
 	sealed class LiteralExpressionSyntax : ExpressionSyntax
 	{
-		public override SyntaxType Type => SyntaxType.NumberExpression;
+		public override SyntaxType Type => SyntaxType.LiteralExpression;
 		public SyntaxToken LiteralToken { get; }
 		public LiteralExpressionSyntax(SyntaxToken inLiteralToken) => LiteralToken = inLiteralToken;
 
