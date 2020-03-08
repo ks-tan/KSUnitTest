@@ -6,7 +6,7 @@ using System.Text;
 namespace KSCheep.CodeAnalysis
 {
 	/// <summary>
-	/// Evaluates an expression syntax
+	/// Evaluates a syntax tree
 	/// </summary>
 	public sealed class Evaluator
 	{

@@ -6,8 +6,9 @@ using System.Text;
 namespace KSCheep.CodeAnalysis
 {
 	/// <summary>
-	/// Parses the tokens in a text (i.e. making sense of the series of tokens)
-	/// This is done by arranging the tokens into a syntax tree, and then iterating through the syntax nodes and evaluate them
+	/// Parses the tokens in a text (i.e. making sense of a series of tokens)
+	/// This means going through each token in the piece of text and placing them in a syntax tree based on their syntax type.
+	/// Their position on the syntax tree will determine the order which they will be evaluated (e.g. parenthesised expressions first, and etc)
 	/// </summary>
 	public sealed class Parser
 	{
