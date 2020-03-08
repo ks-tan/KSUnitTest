@@ -1,4 +1,5 @@
-﻿using System;
+﻿using KSCheep.CodeAnalysis.Syntax;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -71,6 +72,86 @@ namespace KSCheep.CodeAnalysis.Binding
 			Left = inLeft;
 			OperatorKind = inOperatorKind;
 			Right = inRight;
+		}
+	}
+
+	internal sealed class Binder
+	{
+		private readonly List<string> _diagnostics = new List<string>();
+		public IEnumerable<string> Diagnostitcs => _diagnostics;
+
+		public BoundExpression BindExpression(ExpressionSyntax inSyntax)
+		{
+			switch(inSyntax.Kind)
+			{
+				case SyntaxKind.LiteralExpression: return BindLiteralExpression((LiteralExpressionSyntax)inSyntax);
+				case SyntaxKind.UnaryExpression: return BindUnaryExpression((UnaryExpressionSyntax)inSyntax);
+				case SyntaxKind.BinaryExpression: return BindBinaryExpression((BinaryExpressionSyntax)inSyntax);
+				default: throw new Exception("Unexpected syntax " + inSyntax.Kind);
+			}
+		}
+
+		private BoundExpression BindLiteralExpression(LiteralExpressionSyntax inSyntax)
+		{
+			var value = inSyntax.LiteralToken.Value as int? ?? 0;
+			return new BoundLiteralExpression(value);
+		}
+
+		private BoundExpression BindUnaryExpression(UnaryExpressionSyntax inSyntax)
+		{
+			var boundOperand = BindExpression(inSyntax.OperandExpression);
+			var boundOperatorKind = BindUnaryOperatorKind(inSyntax.OperatorToken.Kind, boundOperand.Type);
+
+			if (boundOperatorKind == null)
+			{
+				_diagnostics.Add("Unary operator " + inSyntax.OperatorToken.Text + " is not defined for type " + boundOperand.Type);
+				return boundOperand;
+			}
+
+			return new BoundUnaryExpression(boundOperatorKind.Value, boundOperand);
+		}
+
+		private BoundExpression BindBinaryExpression(BinaryExpressionSyntax inSyntax)
+		{
+			var boundLeft = BindExpression(inSyntax.LeftExpression);
+			var boundRight = BindExpression(inSyntax.RightExpression);
+			var boundOperatorKind = BindBinaryOperatorKind(inSyntax.OperatorToken.Kind, boundLeft.Type, boundRight.Type);
+
+			if (boundOperatorKind == null)
+			{
+				_diagnostics.Add("Binary operator " + inSyntax.OperatorToken.Text + " is not defined for type " + boundLeft.Type + " and " + boundRight.Type);
+				return boundLeft;
+			}
+
+			return new BoundBinaryExpression(boundLeft, boundOperatorKind.Value, boundRight);
+		}
+
+		private BoundUnaryOperatorKind? BindUnaryOperatorKind(SyntaxKind inKind, Type inOperandType)
+		{
+			if (inOperandType != typeof(int))
+				return null;
+
+			switch (inKind)
+			{
+				case SyntaxKind.PlusToken: return BoundUnaryOperatorKind.Identity;
+				case SyntaxKind.MinusToken: return BoundUnaryOperatorKind.Negation;
+				default:  throw new Exception("Unexpected unary operator " + inKind);
+			}
+		}
+
+		private BoundBinaryOperatorKind? BindBinaryOperatorKind(SyntaxKind inKind, Type inLeftType, Type inRightType)
+		{
+			if (inLeftType != typeof(int) || inRightType != typeof(int))
+				return null;
+
+			switch (inKind)
+			{
+				case SyntaxKind.PlusToken: return BoundBinaryOperatorKind.Addition;
+				case SyntaxKind.MinusToken: return BoundBinaryOperatorKind.Subtraction;
+				case SyntaxKind.StarToken: return BoundBinaryOperatorKind.Multiplication;
+				case SyntaxKind.SlashToken: return BoundBinaryOperatorKind.Division;
+				default: throw new Exception("Unexpected unary operator " + inKind);
+			}
 		}
 	}
 }
