@@ -123,7 +123,8 @@ namespace KSCheep.CodeAnalysis
 		}
 
 		/// <summary>
-		/// A primary expression is one where there are no other nested expressions in it
+		/// Parses a primary expression.
+		/// Primary expressions are building blocks of more complex expressions. They are literals, name and names qualified by a "scope-resolution" oeprator (i.e. parenthesises)
 		/// </summary>
 		private ExpressionSyntax ParsePrimaryExpression()
 		{
