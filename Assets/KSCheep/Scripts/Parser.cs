@@ -89,37 +89,41 @@ namespace KSCheep.CodeAnalysis
 
 		/// <summary>
 		/// Building the expression tree based on precedence of operators
+		/// "High precedence" roughly means "should be calculated first", e.g. * operator VS + operator
+		/// Syntax nodes with a high precedence will be placed first (lower) in the syntax tree, as syntax trees are evaluated from bottom up
 		/// </summary>
 		private ExpressionSyntax ParseExpression(int inParentPrecedence = 0)
 		{
 			ExpressionSyntax left;
 			var unaryOperatorPrecedence = CurrentToken.Type.GetUnaryOperatorPrecedence();
 
+			// If current token is a unary operator (i.e. UnaryOperatorPrecedenc != 0) and it is more than parent precedence, we put it first (i.e. lower) in the syntax tree
 			if (unaryOperatorPrecedence != 0 && unaryOperatorPrecedence >= inParentPrecedence)
 			{
 				var operatorToken = NextToken();
 				var operandExpression = ParseExpression(unaryOperatorPrecedence);
 				left = new UnaryExpressionSyntax(operatorToken, operandExpression);
 			}
-			else
+			else // The left expression must be a primary expression
 			{
 				left = ParsePrimaryExpression();
 			}
 
+			// After settling the unary expression, if there exists more tokens after it (i.e. an operator and right expression), we shall parse this "binary expression"
 			while (true)
 			{
-				var precedence = CurrentToken.Type.GetBinaryOperatorPrecedence();
-				if (precedence == 0 || precedence < inParentPrecedence) break;
-				var operatorToken = NextToken();
-				var right = ParseExpression(precedence);
-				left = new BinaryExpressionSyntax(left, operatorToken, right);
+				var precedence = CurrentToken.Type.GetBinaryOperatorPrecedence(); // Getting the precedence of the current token
+				if (precedence == 0 || precedence < inParentPrecedence) break; // If precedence = 0 (i.e. no tokens), or if it is less than the parent (not part of current expression, but the next one), we shall break
+				var operatorToken = NextToken(); // Get current token and proceed to the next one
+				var right = ParseExpression(precedence); // Recursively parse the "right-side" of the binary expression
+				left = new BinaryExpressionSyntax(left, operatorToken, right); // Now with the left, operator, and right sides of the expression, we shall group (or "collapse") them all together as the same "node" (i.e. left) as a BinaryExpressionSyntax
 			}
 
 			return left;
 		}
 
 		/// <summary>
-		/// A primary expression is an atomic unit that only contains one token. Here, we simply return that token
+		/// A primary expression is one where there are no other nested expressions in it
 		/// </summary>
 		private ExpressionSyntax ParsePrimaryExpression()
 		{
