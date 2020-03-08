@@ -2,6 +2,7 @@
 
 using KSUnitTest;
 using KSCheep.CodeAnalysis;
+using KSCheep.CodeAnalysis.Syntax;
 using System.Text;
 using System.Linq;
 

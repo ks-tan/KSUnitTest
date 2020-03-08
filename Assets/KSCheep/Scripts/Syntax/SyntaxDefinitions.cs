@@ -3,13 +3,40 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace KSCheep.CodeAnalysis
+namespace KSCheep.CodeAnalysis.Syntax
 {
 	/// <summary>
-	/// A static class that contains syntax rules and facts
+	/// Declares the different type of syntax tokens you will find in a piece of text
+	/// </summary>
+	public enum SyntaxType
+	{
+		// Tokens
+		BadToken, // error/no such token type
+		EndOfFileToken, // end of file
+		WhitespaceToken, //" "
+		NumberToken, // 12345
+		PlusToken, // +
+		MinusToken, // -
+		StarToken, // *
+		SlashToken, // "/"
+		CloseParenthesisToken, // ")"
+		OpenParenthesisToken, // "("
+
+		// Expressions
+		LiteralExpression, // <literal token>
+		UnaryExpression, // <operator token><operand expression>
+		BinaryExpression, // <left expression><operator token><right expression>
+		ParenthesisedExpression, // ( <expression> )
+	}
+
+	/// <summary>
+	/// A static class that defines each syntax's precedence as compared to one another
 	/// </summary>
 	internal static class SyntaxFacts
 	{
+		/// <summary>
+		/// Helps us get the precedence of unary operators
+		/// </summary>
 		public static int GetUnaryOperatorPrecedence(this SyntaxType inType)
 		{
 			switch (inType)
@@ -42,30 +69,6 @@ namespace KSCheep.CodeAnalysis
 					return 0;
 			}
 		}
-	}
-
-	/// <summary>
-	/// Declares the different type of syntax tokens you will find in a piece of text
-	/// </summary>
-	public enum SyntaxType
-	{
-		// Tokens
-		BadToken, // error/no such token type
-		EndOfFileToken, // end of file
-		WhitespaceToken, //" "
-		NumberToken, // 12345
-		PlusToken, // +
-		MinusToken, // -
-		StarToken, // *
-		SlashToken, // "/"
-		CloseParenthesisToken, // ")"
-		OpenParenthesisToken, // "("
-
-		// Expressions
-		LiteralExpression, // <literal token>
-		UnaryExpression, // <operator token><operand expression>
-		BinaryExpression, // <left expression><operator token><right expression>
-		ParenthesisedExpression, // ( <expression> )
 	}
 
 	/// <summary>

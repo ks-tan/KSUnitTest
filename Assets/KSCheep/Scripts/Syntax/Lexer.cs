@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace KSCheep.CodeAnalysis
+namespace KSCheep.CodeAnalysis.Syntax
 {
 	/// <summary>
 	/// Analyse a piece of text and find its tokens, with type and value.

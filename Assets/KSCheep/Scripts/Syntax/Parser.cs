@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace KSCheep.CodeAnalysis
+namespace KSCheep.CodeAnalysis.Syntax
 {
 	/// <summary>
 	/// Parses the tokens in a text (i.e. making sense of a series of tokens)
