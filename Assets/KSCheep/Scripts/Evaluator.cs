@@ -34,6 +34,15 @@ namespace KSCheep.CodeAnalysis
 				return (int)number.LiteralToken.Value;
 			}
 
+			// Evaluate a unary expression. Just returns the negative value of operand if operator is '-'
+			if (inNode is UnaryExpressionSyntax unary)
+			{
+				var operandExpression = EvaluateExpression(unary.OperandExpression);
+				if (unary.OperatorToken.Type == SyntaxType.MinusToken) return -operandExpression;
+				else if (unary.OperatorToken.Type == SyntaxType.PlusToken) return operandExpression;
+				else throw new Exception("Unexpected unary operator " + unary.OperatorToken.Type);
+			}
+
 			// Evaluate the binary expression. Gets the left and right expression, identify the operator token between them, and perform operation
 			if (inNode is BinaryExpressionSyntax binary)
 			{

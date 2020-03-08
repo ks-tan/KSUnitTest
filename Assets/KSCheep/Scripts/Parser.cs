@@ -92,7 +92,19 @@ namespace KSCheep.CodeAnalysis
 		/// </summary>
 		private ExpressionSyntax ParseExpression(int inParentPrecedence = 0)
 		{
-			var left = ParsePrimaryExpression();
+			ExpressionSyntax left;
+			var unaryOperatorPrecedence = CurrentToken.Type.GetUnaryOperatorPrecedence();
+
+			if (unaryOperatorPrecedence != 0 && unaryOperatorPrecedence >= inParentPrecedence)
+			{
+				var operatorToken = NextToken();
+				var operandExpression = ParseExpression(unaryOperatorPrecedence);
+				left = new UnaryExpressionSyntax(operatorToken, operandExpression);
+			}
+			else
+			{
+				left = ParsePrimaryExpression();
+			}
 
 			while (true)
 			{

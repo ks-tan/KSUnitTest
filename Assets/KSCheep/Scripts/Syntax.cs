@@ -10,6 +10,19 @@ namespace KSCheep.CodeAnalysis
 	/// </summary>
 	internal static class SyntaxFacts
 	{
+		public static int GetUnaryOperatorPrecedence(this SyntaxType inType)
+		{
+			switch (inType)
+			{
+				case (SyntaxType.PlusToken):
+				case (SyntaxType.MinusToken):
+					return 3;
+
+				default: // i.e. this is not a unary operator
+					return 0;
+			}
+		}
+
 		/// <summary>
 		/// Helps us get the different precedence between operators, to determine how the syntax tree should be constructed when we parse an expression
 		/// </summary>
@@ -50,8 +63,9 @@ namespace KSCheep.CodeAnalysis
 
 		// Expressions
 		LiteralExpression, // <literal token>
+		UnaryExpression, // <operator token><operand expression>
 		BinaryExpression, // <left expression><operator token><right expression>
-		ParenthesisedExpression // ( <expression> )
+		ParenthesisedExpression, // ( <expression> )
 	}
 
 	/// <summary>
@@ -117,6 +131,31 @@ namespace KSCheep.CodeAnalysis
 		public override IEnumerable<SyntaxNode> GetChildren()
 		{
 			yield return LiteralToken;
+		}
+	}
+
+	/// <summary>
+	/// An expression that looks like <operator-token><operand> (i.e. -1, or -(2+3))
+	/// </summary>
+	sealed class UnaryExpressionSyntax : ExpressionSyntax
+	{
+		public override SyntaxType Type => SyntaxType.UnaryExpression;
+		public SyntaxToken OperatorToken { get; }
+		public ExpressionSyntax OperandExpression { get; }
+
+		public UnaryExpressionSyntax(SyntaxToken inOperatorToken, ExpressionSyntax inOperandExpression)
+		{
+			OperatorToken = inOperatorToken;
+			OperandExpression = inOperandExpression;
+		}
+
+		/// <summary>
+		/// Gets child syntax nodes in the syntax tree
+		/// </summary>
+		public override IEnumerable<SyntaxNode> GetChildren()
+		{
+			yield return OperatorToken;
+			yield return OperandExpression;
 		}
 	}
 
