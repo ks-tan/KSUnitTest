@@ -88,41 +88,38 @@ namespace KSCheep.CodeAnalysis
 		}
 
 		/// <summary>
-		/// A helper method to parse an expression
+		/// Helps us get the different precedence between operators, to determine how the syntax tree should be constructed when we parse an expression
 		/// </summary>
-		private ExpressionSyntax ParseExpression() => ParseTerm();
-
-		/// <summary>
-		/// Parsing an expression that uses +- operators
-		/// </summary>
-		public ExpressionSyntax ParseTerm()
+		private static int GetBinaryOperatorPrecedence(SyntaxType inType)
 		{
-			// We parse the left factor expression. We build the syntax tree with factor expressions first because +- operations always come last
-			var left = ParseFactor();
-
-			while (CurrentToken.Type == SyntaxType.PlusToken || CurrentToken.Type == SyntaxType.MinusToken)
+			switch(inType)
 			{
-				var operatorToken = NextToken(); // Get the operator token and move to the pointer to the next one
-				var right = ParseFactor(); // With the pointer at the right token, we parse the right factor expression
-				left = new BinaryExpressionSyntax(left, operatorToken, right); // Collapse everything as one binary expression
-			}
+				case (SyntaxType.StarToken):
+				case (SyntaxType.SlashToken):
+					return 2;
 
-			return left;
+				case (SyntaxType.PlusToken):
+				case (SyntaxType.MinusToken):
+					return 1;
+
+				default: // i.e. this is not a binary operator
+					return 0;
+			}
 		}
 
 		/// <summary>
-		/// Parsing expression that uses */ operators
+		/// Building the expression tree based on precedence of operators
 		/// </summary>
-		public ExpressionSyntax ParseFactor()
+		private ExpressionSyntax ParseExpression(int inParentPrecedence = 0)
 		{
-			// Similar to how ParseTerm() works, but this time for times and divide
-
 			var left = ParsePrimaryExpression();
 
-			while (CurrentToken.Type == SyntaxType.StarToken || CurrentToken.Type == SyntaxType.SlashToken)
+			while (true)
 			{
+				var precedence = GetBinaryOperatorPrecedence(CurrentToken.Type);
+				if (precedence == 0 || precedence < inParentPrecedence) break;
 				var operatorToken = NextToken();
-				var right = ParsePrimaryExpression();
+				var right = ParseExpression(precedence);
 				left = new BinaryExpressionSyntax(left, operatorToken, right);
 			}
 
