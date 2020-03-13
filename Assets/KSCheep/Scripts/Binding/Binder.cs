@@ -27,16 +27,25 @@ namespace KSCheep.CodeAnalysis.Binding
 		Division
 	}
 
+	/// <summary>
+	/// A node in our bound tree
+	/// </summary>
 	internal abstract class BoundNode
 	{
 		public abstract BoundNodeKind Kind { get; }
 	}
 
+	/// <summary>
+	/// A bound expression is a node in the bound tree. It also has a "Type".
+	/// </summary>
 	internal abstract class BoundExpression : BoundNode
 	{
 		public abstract Type Type { get; }
 	}
 
+	/// <summary>
+	///  Defining a literal bound expression
+	/// </summary>
 	internal sealed class BoundLiteralExpression : BoundExpression
 	{
 		public override BoundNodeKind Kind => BoundNodeKind.LiteralExpression;
@@ -45,6 +54,9 @@ namespace KSCheep.CodeAnalysis.Binding
 		public BoundLiteralExpression(object inValue) => Value = inValue;
 	}
 
+	/// <summary>
+	/// Defining a unary bound expression
+	/// </summary>
 	internal sealed class BoundUnaryExpression : BoundExpression
 	{
 		public override BoundNodeKind Kind => BoundNodeKind.UnaryExpression;
@@ -59,6 +71,9 @@ namespace KSCheep.CodeAnalysis.Binding
 		}
 	}
 
+	/// <summary>
+	/// Defining a binary bound express
+	/// </summary>
 	internal sealed class BoundBinaryExpression : BoundExpression
 	{
 		public override BoundNodeKind Kind => BoundNodeKind.BinaryExpression;
@@ -75,28 +90,41 @@ namespace KSCheep.CodeAnalysis.Binding
 		}
 	}
 
+	/// <summary>
+	/// Apart from the syntax tree, we are creating a new tree known as the Bound Tree (intermediate representation, or annotated abstract syntax trees)
+	/// This helps us resolve the "Type" (as in "int", "string", etc..) of node on the bound tree (i.e. expressions and etc)
+	/// </summary>
 	internal sealed class Binder
 	{
 		private readonly List<string> _diagnostics = new List<string>();
 		public IEnumerable<string> Diagnostitcs => _diagnostics;
 
+		/// <summary>
+		/// Binding an expression based on the expression's syntax kind
+		/// </summary>
 		public BoundExpression BindExpression(ExpressionSyntax inSyntax)
 		{
 			switch(inSyntax.Kind)
 			{
-				case SyntaxKind.LiteralExpression: return BindLiteralExpression((LiteralExpressionSyntax)inSyntax);
-				case SyntaxKind.UnaryExpression: return BindUnaryExpression((UnaryExpressionSyntax)inSyntax);
-				case SyntaxKind.BinaryExpression: return BindBinaryExpression((BinaryExpressionSyntax)inSyntax);
+				case SyntaxKind.LiteralExpression: return BindLiteralExpression((LiteralExpressionSyntax)inSyntax); // Just assingns a value
+				case SyntaxKind.UnaryExpression: return BindUnaryExpression((UnaryExpressionSyntax)inSyntax); // binds operand recursively while evaluating the unary operator kind of each bound expression
+				case SyntaxKind.BinaryExpression: return BindBinaryExpression((BinaryExpressionSyntax)inSyntax); // binds operand recursively while evaluating the binary operator kind of each bound expression
 				default: throw new Exception("Unexpected syntax " + inSyntax.Kind);
 			}
 		}
 
+		/// <summary>
+		/// Binding a literal expression. Just assigns a value
+		/// </summary>
 		private BoundExpression BindLiteralExpression(LiteralExpressionSyntax inSyntax)
 		{
 			var value = inSyntax.LiteralToken.Value as int? ?? 0;
 			return new BoundLiteralExpression(value);
 		}
 
+		/// <summary>
+		/// Binding a unary expression. Binds operand recursively while evaluating the unary operator kind of each bound expression
+		/// </summary>
 		private BoundExpression BindUnaryExpression(UnaryExpressionSyntax inSyntax)
 		{
 			var boundOperand = BindExpression(inSyntax.OperandExpression);
@@ -111,6 +139,9 @@ namespace KSCheep.CodeAnalysis.Binding
 			return new BoundUnaryExpression(boundOperatorKind.Value, boundOperand);
 		}
 
+		/// <summary>
+		/// Binding a binary expression. Binds operand recursively while evaluating the binary operator kind of each bound expression
+		/// </summary>
 		private BoundExpression BindBinaryExpression(BinaryExpressionSyntax inSyntax)
 		{
 			var boundLeft = BindExpression(inSyntax.LeftExpression);
@@ -126,6 +157,9 @@ namespace KSCheep.CodeAnalysis.Binding
 			return new BoundBinaryExpression(boundLeft, boundOperatorKind.Value, boundRight);
 		}
 
+		/// <summary>
+		/// Determining the unary operator kind of the bound expression by checking the syntax kind of the unary operator
+		/// </summary>
 		private BoundUnaryOperatorKind? BindUnaryOperatorKind(SyntaxKind inKind, Type inOperandType)
 		{
 			if (inOperandType != typeof(int))
@@ -139,6 +173,9 @@ namespace KSCheep.CodeAnalysis.Binding
 			}
 		}
 
+		/// <summary>
+		/// Determining the binary operator kind of the bound expression by checking if left and right are of the right type, and the syntax kind of the binary operator
+		/// </summary>
 		private BoundBinaryOperatorKind? BindBinaryOperatorKind(SyntaxKind inKind, Type inLeftType, Type inRightType)
 		{
 			if (inLeftType != typeof(int) || inRightType != typeof(int))
