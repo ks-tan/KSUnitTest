@@ -5,6 +5,7 @@ using KSCheep.CodeAnalysis;
 using KSCheep.CodeAnalysis.Syntax;
 using System.Text;
 using System.Linq;
+using KSCheep.CodeAnalysis.Binding;
 
 [TestClass]
 public class CheepLexerParserTests
@@ -60,19 +61,22 @@ public class CheepLexerParserTests
 	{
 		string text = "4 + (1 + 2) * 3";
 		var syntaxTree = SyntaxTree.Parse(text);
+		var binder = new Binder();
+		var boundExpression = binder.BindExpression(syntaxTree.Root);
+		var diagnostics = syntaxTree.Diagnostics.Concat(binder.Diagnostitcs).ToArray();
 		StringBuilder expectedResult = new StringBuilder().AppendLine("13");
 		StringBuilder receivedResult = new StringBuilder();
 
-		if (syntaxTree.Diagnostics.Any())
+		if (diagnostics.Any())
 		{
-			foreach(var diagnostic in syntaxTree.Diagnostics)
+			foreach(var diagnostic in diagnostics)
 			{
 				receivedResult.AppendLine(diagnostic);
 			}
 		}
 		else
 		{
-			var evaluator = new Evaluator(syntaxTree.Root);
+			var evaluator = new Evaluator(boundExpression);
 			var result = evaluator.Evaluate();
 			receivedResult.AppendLine(result.ToString());
 		}

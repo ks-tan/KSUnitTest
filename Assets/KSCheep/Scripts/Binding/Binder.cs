@@ -1,98 +1,13 @@
 ﻿using KSCheep.CodeAnalysis.Syntax;
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace KSCheep.CodeAnalysis.Binding
 {
-	internal enum BoundNodeKind
-	{
-		LiteralExpression,
-		UnaryExpression,
-		BinaryExpression
-	}
-
-	internal enum BoundUnaryOperatorKind
-	{
-		Identity,
-		Negation
-	}
-
-	internal enum BoundBinaryOperatorKind
-	{
-		Addition,
-		Subtraction,
-		Multiplication,
-		Division
-	}
-
 	/// <summary>
-	/// A node in our bound tree
-	/// </summary>
-	internal abstract class BoundNode
-	{
-		public abstract BoundNodeKind Kind { get; }
-	}
-
-	/// <summary>
-	/// A bound expression is a node in the bound tree. It also has a "Type".
-	/// </summary>
-	internal abstract class BoundExpression : BoundNode
-	{
-		public abstract Type Type { get; }
-	}
-
-	/// <summary>
-	///  Defining a literal bound expression
-	/// </summary>
-	internal sealed class BoundLiteralExpression : BoundExpression
-	{
-		public override BoundNodeKind Kind => BoundNodeKind.LiteralExpression;
-		public override Type Type => Value.GetType();
-		public object Value { get; }
-		public BoundLiteralExpression(object inValue) => Value = inValue;
-	}
-
-	/// <summary>
-	/// Defining a unary bound expression
-	/// </summary>
-	internal sealed class BoundUnaryExpression : BoundExpression
-	{
-		public override BoundNodeKind Kind => BoundNodeKind.UnaryExpression;
-		public override Type Type => Operand.Type;
-		public BoundUnaryOperatorKind OperatorKind { get; }
-		public BoundExpression Operand { get; }
-
-		public BoundUnaryExpression(BoundUnaryOperatorKind inOperatorKind, BoundExpression inOperand)
-		{
-			OperatorKind = inOperatorKind;
-			Operand = inOperand;
-		}
-	}
-
-	/// <summary>
-	/// Defining a binary bound express
-	/// </summary>
-	internal sealed class BoundBinaryExpression : BoundExpression
-	{
-		public override BoundNodeKind Kind => BoundNodeKind.BinaryExpression;
-		public override Type Type => Left.Type;
-		public BoundExpression Left { get; }
-		public BoundBinaryOperatorKind OperatorKind { get; }
-		public BoundExpression Right { get; }
-
-		public BoundBinaryExpression(BoundExpression inLeft, BoundBinaryOperatorKind inOperatorKind, BoundExpression inRight)
-		{
-			Left = inLeft;
-			OperatorKind = inOperatorKind;
-			Right = inRight;
-		}
-	}
-
-	/// <summary>
-	/// Apart from the syntax tree, we are creating a new tree known as the Bound Tree (intermediate representation, or annotated abstract syntax trees)
-	/// This helps us resolve the "Type" (as in "int", "string", etc..) of node on the bound tree (i.e. expressions and etc)
+	/// Apart from the syntax tree, we are creating a new tree known as the Bound Tree to do what is known as "binding".
+	/// In an expression like a + b, we know we are adding a and b, but we don’t know what those names refer to. Are they local variables? Global? Where are they defined?
+	/// The first bit of analysis that most languages do is called binding or resolution. For each identifier we find out where that name is defined and wire the two together.
 	/// </summary>
 	internal sealed class Binder
 	{

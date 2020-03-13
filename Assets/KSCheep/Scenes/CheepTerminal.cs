@@ -1,4 +1,5 @@
 ﻿using KSCheep.CodeAnalysis;
+using KSCheep.CodeAnalysis.Binding;
 using KSCheep.CodeAnalysis.Syntax;
 using System.Collections;
 using System.Linq;
@@ -44,17 +45,20 @@ public class CheepTerminal : MonoBehaviour
 					foreach (var input in inputLines)
 					{
 						var syntaxTree = SyntaxTree.Parse(input);
+						var binder = new Binder();
+						var boundExpression = binder.BindExpression(syntaxTree.Root);
+						var diagnostics = syntaxTree.Diagnostics.Concat(binder.Diagnostitcs).ToArray();
 
-						if (syntaxTree.Diagnostics.Any())
+						if (diagnostics.Any())
 						{
-							foreach (var diagnostic in syntaxTree.Diagnostics)
+							foreach (var diagnostic in diagnostics)
 							{
 								_stringBuilder.AppendLine(diagnostic);
 							}
 						}
 						else
 						{
-							var evaluator = new Evaluator(syntaxTree.Root);
+							var evaluator = new Evaluator(boundExpression);
 							var result = evaluator.Evaluate();
 							_stringBuilder.AppendLine(result.ToString());
 
